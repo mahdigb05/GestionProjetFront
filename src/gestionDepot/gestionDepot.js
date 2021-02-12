@@ -5,6 +5,7 @@ import { GlobalContext } from "../contexts/GlobalContext";
 import RapportCard from "./rapportCard";
 import { InboxOutlined } from "@ant-design/icons";
 import Navbar from "../navBar/NavBar";
+import uuid from "uuid/dist/v4";
 
 const { Option } = Select;
 const { Dragger } = Upload;
@@ -21,7 +22,7 @@ const DepotList = () => {
     rapports,
     structures,
     setStructures,
-    setRapport,
+    setRapports,
     getRessourceFromApi,
   } = useContext(GlobalContext);
 
@@ -33,9 +34,9 @@ const DepotList = () => {
   const [sujet, setSujet] = useState("");
 
   useEffect(() => {
-    getRessourceFromApi("http://localhost:8080/rapport", setRapport);
+    getRessourceFromApi("http://localhost:8080/rapport/", setRapports);
     getRessourceFromApi(
-      "http://localhost:8080/gestionProjet/structure",
+      "http://localhost:8080/gestionProjet/structure/",
       setStructures
     );
   }, []);
@@ -50,23 +51,27 @@ const DepotList = () => {
       payload.append("filiere", filiere);
       payload.append("file", file);
       payload.append("sujet", sujet);
-      payload.append("email", "user_email");
+      payload.append("email", localStorage.getItem("user_email"));
       await axios.post("http://localhost:8080/rapport", payload, {
         headers: headers,
       });
-      getRessourceFromApi("http://localhost:8080/rapport", setRapport);
+      getRessourceFromApi("http://localhost:8080/rapport", setRapports);
       setVisible(false);
       message.success("rapport ajouter avec succes");
     } catch (err) {}
   };
 
   const search = (rows) => {
-    var o;
-    if (localStorage.getItem("user_role") === "ROLE_ETUDIANT")
-      o = rows.map(
+
+    var o = rows;
+    if (localStorage.getItem("user_role") === "ROLE_ETUDIANT"){
+      o = rows.filter(
         (row) => row.utilisateur.email === localStorage.getItem("user_email")
       );
-    const output = o.filter((row) =>
+    }
+    
+    const ot = o.filter((row) => row.archive === false);
+    const output = ot.filter((row) =>
       searchColumns.some((column) => {
         return (
           row[column]
@@ -97,7 +102,7 @@ const DepotList = () => {
           onCancel={() => setVisible(false)}
         >
           <Form {...layout} name="basic">
-            <Form.Item label="Sujet" name="name">
+            <Form.Item label="Sujet" name="name1">
               <Input onChange={(value) => setSujet(value.target.value)} />
             </Form.Item>
             <Form.Item label="Structure d'accueil">
@@ -114,7 +119,7 @@ const DepotList = () => {
               </Select>
             </Form.Item>
 
-            <Form.Item label="filiere" name="name">
+            <Form.Item label="filiere" name="name2">
               <Input onChange={(value) => setfiliere(value.target.value)} />
             </Form.Item>
 
@@ -154,10 +159,13 @@ const DepotList = () => {
           >
             <i class="fas fa-plus pr-sm-2"></i>Ajouter un rapport
           </Button>
+          <hr/>
         </div>
+        <div className="row">
         {search(rapports).map((rapport) => (
-          <RapportCard rapport={rapport} />
+          <RapportCard rapport={rapport} key={uuid()} />
         ))}
+        </div>
       </div>
     </div>
   );

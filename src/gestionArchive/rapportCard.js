@@ -1,11 +1,10 @@
 import { Card, Modal, Form, Input } from "antd";
-import {
-  EyeOutlined,
-  DeleteOutlined,
-} from "@ant-design/icons";
+import { EyeOutlined, DeleteOutlined } from "@ant-design/icons";
 
 import axios from "axios";
 import { useState } from "react";
+
+import image from "../pdf.png";
 
 const layout = {
   labelCol: { span: 8 },
@@ -53,8 +52,8 @@ const RapportCard = ({ rapport }) => {
     if (state === "modification") {
       try {
         await axios.put(
-          "http://localhost/rapport/",
-          { ...rapport, titre, filiere },
+          "http://localhost:8080/rapport/",
+          { ...rapport, sujet : titre, filiere },
           { headers: headers }
         );
         setVisible2(false);
@@ -62,23 +61,23 @@ const RapportCard = ({ rapport }) => {
       } catch (err) {}
     } else if (state === "consultation") {
       setState("modification");
-      setTitre(rapport.titre);
+      setTitre(rapport.sujet);
       setFiliere(rapport.filiere);
     }
   };
 
   const actions =
     localStorage.getItem("user_role") === "ROLE_ETUDIANT"
-      ? [<EyeOutlined key="setting" onClick={handleClick} />]
+      ? [<EyeOutlined key="eye" onClick={() => {setVisible2(true);setState("consultation")}} />]
       : [
-          <EyeOutlined key="setting" onClick={handleClick} />,
-          <DeleteOutlined onclick={handleDelete} />,
+          <EyeOutlined key="eye" onClick = {() => {setVisible2(true); setState("consultation")}} />,
+          <DeleteOutlined key="del" onClick={() => {setVisible1(true); setState("suppression")}} />,
         ];
 
   return (
     <>
       <Modal
-        title="confirmation de suppression"
+        title="Confirmation de suppression"
         visible={visible1}
         onOk={handleDelete}
         onCancel={() => {
@@ -89,7 +88,7 @@ const RapportCard = ({ rapport }) => {
       </Modal>
 
       <Modal
-        title={state === "consultation" ? "consultation" : "modification"}
+        title={state === "consultation" ? "Consultation" : "Modification"}
         visible={visible2}
         onOk={handleClick}
         okText={state === "consultation" ? "modifier" : "valider"}
@@ -102,7 +101,7 @@ const RapportCard = ({ rapport }) => {
           <Form.Item label="Sujet" name="name1">
             <Input
               readOnly={state === "modification" ? false : true}
-              defaultValue={rapport.titre}
+              defaultValue={rapport.sujet}
               onChange={(value) => setTitre(value.target.value)}
             />
           </Form.Item>
@@ -129,12 +128,21 @@ const RapportCard = ({ rapport }) => {
             cover={
               <img
                 alt="example"
-                src="https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"
+                src={image}
               />
             }
             actions={actions}
           >
-            <Meta title={rapport.titre} description={rapport.description} />
+            <Meta
+              title={rapport.sujet}
+              description={
+                rapport.filiere +
+                " - " +
+                rapport.utilisateur.nom +
+                " " +
+                rapport.utilisateur.prenom
+              }
+            />
           </Card>
         </div>
       </div>

@@ -5,12 +5,13 @@ import {
   FolderOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-
 import axios from "axios";
 import { useState } from "react";
 
+import image from "../pdf.png";
+
 const layout = {
-  labelCol: { span: 8 },
+  labelCol: { span: 6 },
   wrapperCol: { span: 16 },
 };
 
@@ -23,9 +24,9 @@ const RapportCard = ({ rapport }) => {
   const [filiere, setFiliere] = useState("");
   const [state, setState] = useState("");
 
-  const role = localStorage.getItem("user_role");
+  
   const headers = {
-    Authorization: "Bearer " + localStorage.getItem("token")
+    Authorization: "Bearer " + localStorage.getItem("token"),
   };
 
   const handleDelete = async () => {
@@ -33,17 +34,15 @@ const RapportCard = ({ rapport }) => {
       await axios.delete("http://localhost:8080/rapport/" + rapport.idRapport, {
         headers: headers,
       });
-      setVisible2(false);
+      setVisible1(false);
     } catch (err) {}
   };
 
   const handleArchive = async () => {
     try {
-      await axios.put(
-        "http://localhost/rapport/",
-        { ...rapport, archive: true },
-        { headers: headers }
-      );
+      await axios.post("http://localhost:8080/rapport/" + rapport.idRapport + "?archiver=true", {
+        headers: headers,
+      });
       setVisible3(false);
     } catch (err) {}
   };
@@ -51,13 +50,17 @@ const RapportCard = ({ rapport }) => {
   const handleClick = async () => {
     if (state === "modification") {
       try {
-        await axios.put("http://localhost/rapport/", {...rapport,filiere,titre},{ headers: headers });
+        await axios.put(
+          "http://localhost:8080/rapport/",
+          { ...rapport, filiere, sujet :titre },
+          { headers: headers }
+        );
         setVisible2(false);
-		setState("");
+        setState("");
       } catch (err) {}
     } else if (state === "consultation") {
       setState("modification");
-      setTitre(rapport.titre);
+      setTitre(rapport.sujet);
       setFiliere(rapport.filiere);
     }
   };
@@ -65,14 +68,32 @@ const RapportCard = ({ rapport }) => {
   const actions =
     localStorage.getItem("user_role") === "ROLE_ETUDIANT"
       ? [
-          <EyeOutlined key="setting" onClick={handleClick} />,
-          <DeleteOutlined onclick={handleDelete} />,
+          <EyeOutlined
+            key="eye"
+            onClick={() => {
+              setVisible2(true);
+              setState("consultation");
+            }}
+          />,
+          <DeleteOutlined key="del" onClick={() => setVisible1(true)} />,
         ]
       : [
-          <EyeOutlined key="setting" onClick={handleClick} />,
-          <DeleteOutlined onclick={handleDelete} />,
-          <FolderOutlined onclick={handleArchive} />,
-          <PlusOutlined onclick />,
+          <EyeOutlined
+            key="eye"
+            onClick={() => {
+              setVisible2(true);
+              setState("consultation");
+            }}
+          />,
+          <DeleteOutlined
+            key="del"
+            onClick={() => {
+              setVisible1(true);
+              setState("suppression");
+            }}
+          />,
+          <FolderOutlined key="ar" onClick={() => setVisible3(true)} />,
+          <PlusOutlined key="affect" />,
         ];
 
   return (
@@ -83,9 +104,10 @@ const RapportCard = ({ rapport }) => {
         onOk={handleDelete}
         onCancel={() => {
           setVisible1(false);
+          setState("");
         }}
       >
-        voulez-vous vraimern supprimer ce rapport ?
+        voulez-vous vraiment supprimer ce rapport ?
       </Modal>
 
       <Modal
@@ -94,6 +116,7 @@ const RapportCard = ({ rapport }) => {
         onOk={handleArchive}
         onCancel={() => {
           setVisible3(false);
+          setState("");
         }}
       >
         voulez-vous vraiment archiver ce rapport ?
@@ -107,13 +130,14 @@ const RapportCard = ({ rapport }) => {
         cancelText="annuler"
         onCancel={() => {
           setVisible2(false);
+          setState("");
         }}
       >
         <Form {...layout} name="basic">
           <Form.Item label="Sujet" name="name1">
             <Input
               readOnly={state === "modification" ? false : true}
-              defaultValue={rapport.titre}
+              defaultValue={rapport.sujet}
               onChange={(value) => setTitre(value.target.value)}
             />
           </Form.Item>
@@ -124,28 +148,34 @@ const RapportCard = ({ rapport }) => {
             <Input
               readOnly={state === "modification" ? false : true}
               defaultValue={rapport.filiere}
-			  onChange = {(value) => setFiliere(value.target.value)}
+              onChange={(value) => setFiliere(value.target.value)}
             />
           </Form.Item>
         </Form>
       </Modal>
 
       <div>
-        <div className="container pt-4">
+        
           <Card
-            style={{ width: 300 }}
-            cover={
-              <img
-                alt="example"
-                src="https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"
-              />
-            }
+            style={{ width: 250 }}
+            cover={<img alt="example" src={image} />}
             actions={actions}
+            size="small"
+            bordered={false}
           >
-            <Meta title={rapport.titre} description={rapport.description} />
+            <Meta
+              title={rapport.sujet}
+              description={
+                rapport.filiere +
+                " - " +
+                rapport.utilisateur.nom +
+                " " +
+                rapport.utilisateur.prenom
+              }
+            />
           </Card>
         </div>
-      </div>
+      
     </>
   );
 };

@@ -5,6 +5,7 @@ import { GlobalContext } from "../contexts/GlobalContext";
 import RapportCard from "./rapportCard";
 import { InboxOutlined } from "@ant-design/icons";
 import Navbar from "../navBar/NavBar";
+import uuid from "uuid/dist/v4";
 
 const { Option } = Select;
 const { Dragger } = Upload;
@@ -17,17 +18,18 @@ const layout = {
 
 const ArchiveList = () => {
   const [searchValue, setSearchValue] = useState("");
-  const { getArchive, archive } = useContext(GlobalContext);
+  const { rapports, setRapports,getRessourceFromApi } = useContext(GlobalContext);
 
   const searchColumns = ["sujet", "filiere"];
 
   useEffect(() => {
-    getArchive();
+    getRessourceFromApi("http://localhost:8080/rapport",setRapports)
   }, []);
 
   const search = (rows) => {
-    console.log(rows);
-    const output = rows.filter((row) =>
+    const o = rows.filter(row => row.archive === true);
+    
+    const output = o.filter((row) =>
       searchColumns.some((column) => {
         return (
           row[column]
@@ -57,8 +59,8 @@ const ArchiveList = () => {
           onChange={(value) => setSearchValue(value.target.value)}
         />
       </div>
-      {search(archive).map((ar) => (
-        <RapportCard rapport={ar} />
+      {search(rapports).map((ar) => (
+        <RapportCard rapport={ar} key={uuid()}/>
       ))}
     </div>
     </div>
